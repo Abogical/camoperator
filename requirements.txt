@@ -1,0 +1,5 @@
+gphoto2
+pyserial
+rawpy
+pillow
+tqdm
