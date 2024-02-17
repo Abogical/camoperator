@@ -57,7 +57,7 @@ def capture_x_axis(camera, directory, y, x_steps, max_x, controller, progress):
     capture_xy(camera, directory, 0 if even_y else max_x, y)
     progress.update(1)
 
-    for x, x_step in (enumerate(x_steps, start=1) if even_y else zip(range(max_x-1, -1, -1), -x_steps)):
+    for x, x_step in (enumerate(x_steps, start=1) if even_y else zip(range(max_x-1, -1, -1), reversed(-x_steps))):
         controller.move_x(x_step)
         progress.set_description(f'Capturing images. Current ({x}, {y})')
         capture_xy(camera, directory, x, y)
