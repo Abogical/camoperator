@@ -2,3 +2,4 @@ gphoto2
 pyserial
 pillow
 tqdm
+numpy
