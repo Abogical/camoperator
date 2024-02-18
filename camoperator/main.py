@@ -65,6 +65,7 @@ def capture_xy(camera, directory, x, y, progress):
     if download_thread != None:
         download_thread.join()
 
+    progress.set_description(f'Capturing images. Current ({x}, {y})')
     capture_file = camera.capture()
     download_thread = DownloadThread(
         camera,
@@ -77,13 +78,10 @@ def capture_xy(camera, directory, x, y, progress):
 def capture_x_axis(camera, directory, y, x_steps, max_x, controller, progress):
     even_y = (y%2 == 0)
     
-    init_x = max_x if even_y else 0
-    progress.set_description(f'Capturing images. Current ({init_x}, {y})')
-    capture_xy(camera, directory, init_x, y, progress)
+    capture_xy(camera, directory, max_x if even_y else 0, y, progress)
 
     for x, x_step in (zip(range(max_x-1, -1, -1), x_steps) if even_y else enumerate(reversed(-x_steps), start=1)):
         controller.move_x(x_step)
-        progress.set_description(f'Capturing images. Current ({x}, {y})')
         capture_xy(camera, directory, x, y, progress)
 
 def main():
