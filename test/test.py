@@ -103,7 +103,7 @@ class CLITest(unittest.TestCase):
             def get_image(self):
                 shape = (MockCamera.camera_height, MockCamera.camera_width)
                 result = np.zeros((*shape, 3), dtype=np.uint8)
-                result[:, :, 0] = MockController.instance.x % 256
+                result[:, :, 0] = (MockController.max-MockController.instance.x) % 256
                 result[:, :, 1] = MockController.instance.y % 256
                 result[:, :, 2] = np.random.randint(0, 256, shape)
 
