@@ -2,6 +2,7 @@ import gphoto2 as gp
 import rawpy
 import tempfile
 import os
+from PIL import Image
 
 class Camera:
     def __init__(self):
