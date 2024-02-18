@@ -113,7 +113,8 @@ class CLITest(unittest.TestCase):
         with patch("sys.argv", ['camoperator', self.example_path, '-p', 'COM4', '-X', str(self.X), '-Y', str(self.Y)]):
             with patch("camoperator.main.Controller", MockController):
                 with patch("camoperator.main.Camera", MockCamera):
-                    camoperator.main.main()
+                    with patch("camoperator.main.get_filename", lambda directory, x, y: os.path.join(directory, f"{x}-{y}.png")):
+                        camoperator.main.main()
         
         checked_files = np.zeros((self.X, self.Y))
         y_positions = np.round(np.linspace(0, MockController.max, self.Y))

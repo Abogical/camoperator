@@ -56,6 +56,9 @@ class DownloadThread(threading.Thread):
         self.camera.download(self.source, self.destination)
         self.progress.update(1)
 
+def get_filename(directory, x, y):
+    return os.path.join(directory, f"{x}-{y}.nef")
+
 download_thread = None
 def capture_xy(camera, directory, x, y, progress):
     global download_thread
@@ -66,7 +69,7 @@ def capture_xy(camera, directory, x, y, progress):
     download_thread = DownloadThread(
         camera,
         capture_file,
-        os.path.join(directory, f"{x}-{y}.png"),
+        get_filename(directory, x, y),
         progress
     )
     download_thread.start()
