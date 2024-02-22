@@ -1,5 +1,4 @@
 import gphoto2 as gp
-import tempfile
 import os
 from PIL import Image
 
@@ -7,20 +6,25 @@ class Camera:
     def __init__(self):
         self.camera = gp.Camera()
         self.camera.init()
+
+        # Set up config
+        # TODO: make this modifiable
+        conf = self.camera.get_config()
+        for key, value in {
+            "imagequality": "NEF (Raw)",
+            "autofocus": "Off"
+        }.items():
+            conf.get_child_by_name(key).set_value(value)
+        self.camera.set_config(conf)
+
     
     def capture(self):
-        return self.camera.capture()
+        return self.camera.capture(gp.GP_CAPTURE_IMAGE)
 
     def download(self, source, destination):
-        camera_file = self.camera.file_get(source.folder, source.file, gp.GP_FILE_TYPE_NORMAL)
-        
-        with tempfile.NamedTemporaryFile(delete_on_close=False) as fp:
-            fp.close()
-            camera_file.save(fp.name, mode='wb')
-            Image.fromarray(rawpy.imread(fp.name).postprocess()).save(destination)
-            os.remove(fp.name)
-            
-        self.camera.file_delete(source.folder, source.file)
+        camera_file = self.camera.file_get(source.folder, source.name, gp.GP_FILE_TYPE_NORMAL)
+        camera_file.save(destination)
+        self.camera.file_delete(source.folder, source.name)
 
     def close(self):
         self.camera.exit()
