@@ -7,6 +7,13 @@ import numpy as np
 from tqdm import tqdm
 import threading
 
+def positive_int(arg):
+    n = int(arg)
+    if n < 0:
+        raise ValueError(f"Negative number ({arg}) is invalid")
+    return n
+
+
 argument_parser = argparse.ArgumentParser(
     prog='camoperator',
     description='Camera operator: Controls the camera arm rig to capture '
@@ -28,16 +35,44 @@ argument_parser.add_argument(
 
 argument_parser.add_argument(
     '-X', '--horizontal-images',
-    type=int,
+    type=positive_int,
     help='Number of horizontal images',
     required=True
 )
 
 argument_parser.add_argument(
     '-Y', '--vertical-images',
-    type=int,
+    type=positive_int,
     help='Number of vertical images',
     required=True
+)
+
+argument_parser.add_argument(
+    '--min-x',
+    type=positive_int,
+    help='Minimum horizontal displacment',
+    default=0
+)
+
+argument_parser.add_argument(
+    '--min-y',
+    type=positive_int,
+    help='Minimum vertical displacment',
+    default=0
+)
+
+argument_parser.add_argument(
+    '--max-x',
+    type=positive_int,
+    help='Maximum horizontal displacment',
+    default=Controller.max
+)
+
+argument_parser.add_argument(
+    '--max-y',
+    type=positive_int,
+    help='Maximum vertical displacment',
+    default=Controller.max
 )
 
 def get_steps(min, max, divisions):
@@ -91,8 +126,14 @@ def main():
     
     controller.reset()
 
-    y_steps = get_steps(0, Controller.max, arguments.vertical_images)
-    x_steps = get_steps(0, Controller.max, arguments.horizontal_images)
+    if arguments.min_x > 0:
+        controller.move_x(arguments.min_x)
+    
+    if arguments.min_y > 0:
+        controller.move_y(arguments.min_y)
+
+    y_steps = get_steps(arguments.min_y, arguments.max_y, arguments.vertical_images)
+    x_steps = get_steps(arguments.min_x, arguments.max_x, arguments.horizontal_images)
 
     progress = tqdm(desc='Capturing images.', total=(arguments.horizontal_images)*(arguments.vertical_images))
 

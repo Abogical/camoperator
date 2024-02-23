@@ -78,6 +78,10 @@ class CLITest(unittest.TestCase):
         cls.example_path = os.path.join('test', '.artifacts', 'cli_test_output', datetime.datetime.now().isoformat())
         cls.X = random.randint(5,10)
         cls.Y = random.randint(5,10)
+        cls.min_x = random.randint(0, 10000)
+        cls.max_x = random.randint(BaseMockController.max-10000, BaseMockController.max)
+        cls.min_y = random.randint(0, 10000)
+        cls.max_y = random.randint(BaseMockController.max-10000, BaseMockController.max)
         os.makedirs(cls.example_path, exist_ok=True)
 
     @classmethod
@@ -103,22 +107,23 @@ class CLITest(unittest.TestCase):
             def get_image(self):
                 shape = (MockCamera.camera_height, MockCamera.camera_width)
                 result = np.zeros((*shape, 3), dtype=np.uint8)
-                result[:, :, 0] = (MockController.max-MockController.instance.x) % 256
+                result[:, :, 0] = MockController.instance.x % 256
                 result[:, :, 1] = MockController.instance.y % 256
                 result[:, :, 2] = np.random.randint(0, 256, shape)
 
                 return result
 
 
-        with patch("sys.argv", ['camoperator', self.example_path, '-p', 'COM4', '-X', str(self.X), '-Y', str(self.Y)]):
+        with patch("sys.argv", ['camoperator', self.example_path, '-p', 'COM4', '-X', str(self.X), '-Y', str(self.Y),
+            '--min-x', str(self.min_x), '--max-x', str(self.max_x), '--min-y', str(self.min_y), '--max-y', str(self.max_y)]):
             with patch("camoperator.main.Controller", MockController):
                 with patch("camoperator.main.Camera", MockCamera):
                     with patch("camoperator.main.get_filename", lambda directory, x, y: os.path.join(directory, f"{x}-{y}.png")):
                         camoperator.main.main()
         
         checked_files = np.zeros((self.X, self.Y))
-        y_positions = np.round(np.linspace(0, MockController.max, self.Y))
-        x_positions = np.round(np.linspace(0, MockController.max, self.X))
+        y_positions = np.round(np.linspace(self.min_y, self.max_y, self.Y))
+        x_positions = np.round(np.linspace(self.max_x, self.min_x, self.X))
         for filename in os.listdir(self.example_path):
             match = filename_re.match(filename)
             self.assertIsNotNone(match, f'File {filename} does not match expected format')
