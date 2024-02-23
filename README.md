@@ -6,5 +6,5 @@ the integral image.
 ## Usage
 
 ```
-python3 camoperator/main.py [-h] -p CONTROLLER_PORT -X HORIZONTAL_IMAGES -Y VERTICAL_IMAGES directory
+python -m camoperator.main [-h] -p CONTROLLER_PORT -X HORIZONTAL_IMAGES -Y VERTICAL_IMAGES [--min-x MIN_X] [--min-y MIN_Y] [--max-x MAX_X] [--max-y MAX_Y] directory
 ```
