@@ -10,7 +10,7 @@ class Controller:
             bytesize=serial.EIGHTBITS,
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
-            timeout=20
+            timeout=40
         )
         
         # Check connection
