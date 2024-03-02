@@ -6,13 +6,7 @@ from itertools import cycle
 import numpy as np
 from tqdm import tqdm
 import threading
-
-def positive_int(arg):
-    n = int(arg)
-    if n < 0:
-        raise ValueError(f"Negative number ({arg}) is invalid")
-    return n
-
+from .utils import positive_int
 
 argument_parser = argparse.ArgumentParser(
     prog='camoperator',

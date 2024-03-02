@@ -1,9 +1,8 @@
 import gphoto2 as gp
 import os
-from PIL import Image
 
 class Camera:
-    def __init__(self):
+    def __init__(self, config={}):
         self.camera = gp.Camera()
         self.camera.init()
 
@@ -12,7 +11,8 @@ class Camera:
         conf = self.camera.get_config()
         for key, value in {
             "imagequality": "NEF (Raw)",
-            "autofocus": "Off"
+            "autofocus": "Off",
+            **config
         }.items():
             conf.get_child_by_name(key).set_value(value)
         self.camera.set_config(conf)

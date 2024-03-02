@@ -1,5 +1,7 @@
 gphoto2
 pyserial
-pillow
 tqdm
 numpy
+rawpy
+opencv-python
+exifread

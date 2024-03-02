@@ -3,20 +3,34 @@ from unittest.mock import patch
 import camoperator.main
 import camoperator.camera
 import camoperator.controller
+import camoperator.calibrate
 import os
 import numpy as np
-from PIL import Image
 import random
 import time
 import re
 import datetime
 import shutil
+import rawpy
+import cv2
+import io
+import json
+from dataclasses import dataclass
+import tempfile
 
 filename_re = re.compile("(\\d+)-(\\d+)\\.(.*)")
 time_speed = 100
 
+@dataclass
+class MockCameraFile:
+    folder: str
+    name: str
+
+    def __hash__(self):
+        return hash((self.folder, self.name))
+
 class BaseMockCamera:
-    def __init__(self):
+    def __init__(self, config={}):
         self.mock_storage = {}
 
     def get_image(self):
@@ -24,13 +38,13 @@ class BaseMockCamera:
 
     def capture(self):
         time.sleep(2/time_speed)
-        mock_filename = datetime.datetime.now().isoformat()
+        mock_filename = MockCameraFile('', datetime.datetime.now().isoformat())
         self.mock_storage[mock_filename] = self.get_image()
         return mock_filename
     
     def download(self, source, destination):
         time.sleep(1/time_speed)
-        Image.fromarray(self.mock_storage[source]).save(destination)
+        cv2.imwrite(destination, cv2.cvtColor(self.mock_storage[source], cv2.COLOR_RGB2BGR))
         del self.mock_storage[source]
 
     def close(self):
@@ -129,12 +143,52 @@ class CLITest(unittest.TestCase):
             self.assertIsNotNone(match, f'File {filename} does not match expected format')
             x, y = match.group(1,2)
             x, y = int(x), int(y)
-            checked_files[x, y] = 1 
-            with Image.open(os.path.join(self.example_path, filename)) as im:
-                np_img = np.array(im)
-                self.assertTrue((np_img[:,:, 0] == x_positions[x] % 256).all())
-                self.assertTrue((np_img[:,:, 1] == y_positions[y] % 256).all())
-                self.assertEqual(np_img.shape, (MockCamera.camera_height, MockCamera.camera_width, 3))
+            checked_files[x, y] = 1
+            np_img = cv2.cvtColor(cv2.imread(os.path.join(self.example_path, filename)), cv2.COLOR_BGR2RGB)
+            self.assertTrue((np_img[:,:, 0] == x_positions[x] % 256).all())
+            self.assertTrue((np_img[:,:, 1] == y_positions[y] % 256).all())
+            self.assertEqual(np_img.shape, (MockCamera.camera_height, MockCamera.camera_width, 3))
         
         self.assertTrue(checked_files.all())
+
+class CalibrateCLITest(unittest.TestCase):
+    def test_empty(self):
+        with self.assertRaises(SystemExit):
+            camoperator.calibrate.main()
+    
+    def test_run(self):
+        class MockController(BaseMockController):
+            def __init__(self, port):
+                super().__init__(port)
+                MockController.instance = self
+
+        class MockCamera(BaseMockCamera):
+            def get_image(self):
+                self.test_object.assertEqual(MockController.instance.x, 0)
+                self.test_object.assertEqual(MockController.instance.y, 0)
+                return None
+
+            def download(self, source, destination):
+                time.sleep(1/time_speed)
+                shutil.copyfile('test/checkerboard.nef', destination)
+                del self.mock_storage[source]
+
+        MockCamera.test_object = self
+
+        output_capture = io.TextIOWrapper(io.BytesIO())
+
+        with patch('sys.argv', ['calibrate', '--checkerboard-dims', '8,6', '-p', 'COM4']):
+            with patch('sys.stdout', output_capture):
+                with patch("camoperator.calibrate.Controller", MockController):
+                    with patch("camoperator.calibrate.Camera", MockCamera):
+                        camoperator.calibrate.main()
+        
+        output_capture.seek(0)
+        config = json.load(output_capture)
+        self.assertIn("displayFOV", config)
+        self.assertIn("f-number", config)
+        self.assertIn("iso", config)
+        self.assertIn("whitebalance", config)
+        self.assertIn("shutterspeed", config)
+
             
