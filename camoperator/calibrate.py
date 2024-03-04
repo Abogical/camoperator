@@ -38,7 +38,7 @@ argument_parser.add_argument(
 
 argument_parser.add_argument(
     '-o', '--output',
-    type=argparse.FileType(mode='wb'),
+    type=argparse.FileType(mode='w'),
     help='Output filename, default is stdout'
 )
 
@@ -61,7 +61,7 @@ def main():
     camera.download(camera_file, temp_filename)
 
     with open(temp_filename, 'rb') as temp_file:
-        if extension == "nef":
+        if extension.lower() == ".nef":
             with rawpy.imread(temp_file) as raw_img:
                 img = cv2.cvtColor(raw_img.postprocess(), cv2.COLOR_RGB2GRAY)
         else:
