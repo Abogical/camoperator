@@ -87,6 +87,11 @@ class BaseMockController:
 
 
 class CLITest(unittest.TestCase):
+    class MockConfigCamera(BaseMockCamera):
+        def __init__(self, config={}):
+            self.check_config(config)
+            super().__init__(config)
+
     @classmethod
     def setUpClass(cls):
         cls.example_path = os.path.join('test', '.artifacts', 'cli_test_output', datetime.datetime.now().isoformat())
@@ -96,7 +101,17 @@ class CLITest(unittest.TestCase):
         cls.max_x = random.randint(BaseMockController.max-10000, BaseMockController.max)
         cls.min_y = random.randint(0, 10000)
         cls.max_y = random.randint(BaseMockController.max-10000, BaseMockController.max)
+        cls.config = {
+            "f-number": random.uniform(3, 9),
+            "whitebalance": random.randint(300, 1000),
+            "iso": random.randint(100, 1000),
+            "shutterspeed": f"1/{random.randint(10,20)}"
+        }
+
         os.makedirs(cls.example_path, exist_ok=True)
+
+        with open(os.path.join(cls.example_path, "config.json"), "w") as config_file:
+            json.dump(cls.config, config_file)
 
     @classmethod
     def tearDownClass(cls):
@@ -104,6 +119,9 @@ class CLITest(unittest.TestCase):
             shutil.rmtree(cls.example_path)
         except FileNotFoundError:
             pass
+
+    def setUp(self):
+        self.MockConfigCamera.check_config = lambda _, config: self.assertDictEqual(config, self.config)
 
     def test_empty(self):
         with self.assertRaises(SystemExit):
@@ -116,7 +134,7 @@ class CLITest(unittest.TestCase):
                 super().__init__(port)
                 MockController.instance = self
 
-        class MockCamera(BaseMockCamera):
+        class MockCamera(self.MockConfigCamera):
             camera_height, camera_width = random.randint(400, 600), random.randint(400, 600) 
             def get_image(self):
                 shape = (MockCamera.camera_height, MockCamera.camera_width)
@@ -139,15 +157,16 @@ class CLITest(unittest.TestCase):
         y_positions = np.round(np.linspace(self.min_y, self.max_y, self.Y))
         x_positions = np.round(np.linspace(self.max_x, self.min_x, self.X))
         for filename in os.listdir(self.example_path):
-            match = filename_re.match(filename)
-            self.assertIsNotNone(match, f'File {filename} does not match expected format')
-            x, y = match.group(1,2)
-            x, y = int(x), int(y)
-            checked_files[x, y] = 1
-            np_img = cv2.cvtColor(cv2.imread(os.path.join(self.example_path, filename)), cv2.COLOR_BGR2RGB)
-            self.assertTrue((np_img[:,:, 0] == x_positions[x] % 256).all())
-            self.assertTrue((np_img[:,:, 1] == y_positions[y] % 256).all())
-            self.assertEqual(np_img.shape, (MockCamera.camera_height, MockCamera.camera_width, 3))
+            if filename != 'config.json':
+                match = filename_re.match(filename)
+                self.assertIsNotNone(match, f'File {filename} does not match expected format')
+                x, y = match.group(1,2)
+                x, y = int(x), int(y)
+                checked_files[x, y] = 1
+                np_img = cv2.cvtColor(cv2.imread(os.path.join(self.example_path, filename)), cv2.COLOR_BGR2RGB)
+                self.assertTrue((np_img[:,:, 0] == x_positions[x] % 256).all())
+                self.assertTrue((np_img[:,:, 1] == y_positions[y] % 256).all())
+                self.assertEqual(np_img.shape, (MockCamera.camera_height, MockCamera.camera_width, 3))
         
         self.assertTrue(checked_files.all())
 

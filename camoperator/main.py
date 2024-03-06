@@ -7,6 +7,7 @@ import numpy as np
 from tqdm import tqdm
 import threading
 from .utils import positive_int
+import json
 
 argument_parser = argparse.ArgumentParser(
     prog='camoperator',
@@ -69,6 +70,12 @@ argument_parser.add_argument(
     default=Controller.max
 )
 
+argument_parser.add_argument(
+    '-c', '--config',
+    type=argparse.FileType('r'),
+    help='Camera configuration file'
+)
+
 def get_steps(min, max, divisions):
     positions = np.round(np.linspace(min, max, divisions))
     return (positions[1:]-positions[:-1]).astype(int)
@@ -116,7 +123,23 @@ def capture_x_axis(camera, directory, y, x_steps, max_x, controller, progress):
 def main():
     arguments = argument_parser.parse_args()
     controller = Controller(arguments.controller_port)
-    camera = Camera()
+
+    # Get camera config if any
+    camera_config = {}
+    if arguments.config is not None:
+        camera_config = json.load(arguments.config)
+    else:
+        try:
+            with open(os.path.join(arguments.directory, 'config.json')) as camera_config_file:
+                camera_config = json.load(camera_config_file)
+        except FileNotFoundError:
+            pass
+
+    camera = Camera(dict(
+        (key, camera_config[key])
+        for key in camera_config
+        if key in set(["f-number", "iso", "shutterspeed", "whitebalance"])
+    ))
     
     controller.reset()
 
