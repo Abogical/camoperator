@@ -12,6 +12,7 @@ class Camera:
         for key, value in {
             "imagequality": "NEF (Raw)",
             "autofocus": "Off",
+            "capturemode": "Single Shot",
             **config
         }.items():
             conf.get_child_by_name(key).set_value(str(value))
