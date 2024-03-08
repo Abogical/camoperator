@@ -14,7 +14,7 @@ class Camera:
             "autofocus": "Off",
             **config
         }.items():
-            conf.get_child_by_name(key).set_value(value)
+            conf.get_child_by_name(key).set_value(str(value))
         self.camera.set_config(conf)
 
     

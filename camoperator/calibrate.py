@@ -82,7 +82,7 @@ def main():
     objp[:,:2] = np.mgrid[0:arguments.checkerboard_dims[0],0:arguments.checkerboard_dims[1]].T.reshape(-1,2) * square_size
     
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera([objp], [corners], (img.shape[1], img.shape[0]), None, None)
-    f_number = float(exif_data["EXIF MaxApertureValue"].values[0])
+    f_number = float(exif_data["EXIF FNumber"].values[0])
     fov_x, fov_y, focal_length, _, _ = cv2.calibrationMatrixValues(mtx, (img.shape[1], img.shape[0]), f_number, f_number)
 
     output_buffer = arguments.output or sys.stdout
