@@ -6,7 +6,7 @@ from itertools import cycle
 import numpy as np
 from tqdm import tqdm
 import threading
-from .utils import positive_int
+from .utils import positive_int, dimensions
 import json
 
 argument_parser = argparse.ArgumentParser(
@@ -76,6 +76,12 @@ argument_parser.add_argument(
     help='Camera configuration file'
 )
 
+argument_parser.add_argument(
+    '--resume',
+    type=dimensions,
+    help='Resume operation starting from a given image coordinates'
+)
+
 def get_steps(min, max, divisions):
     positions = np.round(np.linspace(min, max, divisions))
     return (positions[1:]-positions[:-1]).astype(int)
@@ -111,12 +117,10 @@ def capture_xy(camera, directory, x, y, progress):
     )
     download_thread.start()
 
-def capture_x_axis(camera, directory, y, x_steps, max_x, controller, progress):
-    even_y = (y%2 == 0)
-    
-    capture_xy(camera, directory, max_x if even_y else 0, y, progress)
+def capture_x_axis(camera, directory, y, start_index, index_and_steps, controller, progress):
+    capture_xy(camera, directory, start_index, y, progress)
 
-    for x, x_step in (zip(range(max_x-1, -1, -1), x_steps) if even_y else enumerate(reversed(-x_steps), start=1)):
+    for x, x_step in index_and_steps:
         controller.move_x(x_step)
         capture_xy(camera, directory, x, y, progress)
 
@@ -152,12 +156,34 @@ def main():
     y_steps = get_steps(arguments.min_y, arguments.max_y, arguments.vertical_images)
     x_steps = get_steps(arguments.min_x, arguments.max_x, arguments.horizontal_images)
 
-    progress = tqdm(desc='Capturing images.', total=(arguments.horizontal_images)*(arguments.vertical_images))
+    resume_x, resume_y = arguments.horizontal_images-1, 0
+    if arguments.resume:
+        resume_x, resume_y = arguments.resume
+        if resume_y > 0:
+            controller.move_y(y_steps[:resume_y].sum())
+        if resume_x < arguments.horizontal_images-1:
+            controller.move_x(x_steps[:(arguments.horizontal_images-resume_x-1)].sum())
 
-    capture_x_axis(camera, arguments.directory, 0, x_steps, arguments.horizontal_images-1, controller, progress)
-    for y, y_step in enumerate(y_steps, start=1):
+    progress = tqdm(desc='Capturing images.', total=(arguments.horizontal_images)*(arguments.vertical_images),
+        initial=arguments.horizontal_images*resume_y + (arguments.horizontal_images - resume_x - 1 if resume_y%2 == 0 else resume_x)
+    )
+
+    left_steps = list(zip(range(arguments.horizontal_images-2, -1, -1), x_steps))
+    right_steps = list(enumerate(reversed(-x_steps), start=1))
+
+    capture_x_axis(camera, arguments.directory, resume_y,
+        resume_x,
+        left_steps[(arguments.horizontal_images-resume_x-1):] if resume_y%2 == 0 else right_steps[resume_x:],
+        controller, progress)
+    for y, y_step in enumerate(y_steps[resume_y:], start=resume_y+1):
+        even_y = y%2 == 0
         controller.move_y(y_step)
-        capture_x_axis(camera, arguments.directory, y, x_steps, arguments.horizontal_images-1, controller, progress)
+        capture_x_axis(camera, arguments.directory, y,
+            arguments.horizontal_images-1 if even_y else 0,
+            left_steps if even_y else right_steps,
+            controller,
+            progress
+        )
     
     download_thread.join()
     camera.close()

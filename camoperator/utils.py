@@ -6,4 +6,4 @@ def positive_int(arg):
 
 def dimensions(arg):
     x, y = arg.split(',')
-    return (int(x), int(y))
+    return (positive_int(x), positive_int(y))
