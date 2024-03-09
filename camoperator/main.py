@@ -82,7 +82,8 @@ argument_parser.add_argument(
 argument_parser.add_argument(
     '--resume',
     type=dimensions,
-    help='Resume operation starting from a given image coordinates'
+    help='Resume operation starting from a given image coordinates',
+    metavar='X,Y'
 )
 
 def get_steps(min, max, divisions):
