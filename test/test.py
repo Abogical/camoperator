@@ -17,6 +17,7 @@ import io
 import json
 from dataclasses import dataclass
 import tempfile
+import logging
 
 filename_re = re.compile("(\\d+)-(\\d+)\\.(.*)")
 time_speed = 100
@@ -69,6 +70,9 @@ class BaseMockController:
         
         time.sleep(abs(dx)/(self.speed*25*time_speed))
         self.x = self.x+dx
+
+        logging.info("Moving x by %d to new position %d", dx, self.x)
+
         if self.x < 0:
             raise RuntimeError(f'x is set as negative ({self.x}) after command {dx}')
         if self.x > self.max:
@@ -80,6 +84,9 @@ class BaseMockController:
 
         time.sleep(abs(dy)/(self.speed*25*time_speed))
         self.y = self.y+dy
+
+        logging.info("Moving y by %d to new position %d", dy, self.y)
+
         if self.y < 0:
             raise RuntimeError(f'y is set as negative ({self.y}) after command {dy}')
         if self.y > self.max:
@@ -174,6 +181,11 @@ class CLITest(unittest.TestCase):
     def test_resume_run(self):
         resume_x = random.randint(1, self.X-2)
         resume_y = random.randint(1, self.Y-2)
+
+        logging.info('Starting test_resume_run with arguments %s',
+        ['camoperator', self.example_path, '-p', 'COM4', '-X', str(self.X), '-Y', str(self.Y),
+        '--min-x', str(self.min_x), '--max-x', str(self.max_x), '--min-y', str(self.min_y),  '--max-y', str(self.max_y),
+            '--resume', f'{resume_x},{resume_y}'])
 
         class MockController(BaseMockController):
             def __init__(self, port):

@@ -8,6 +8,9 @@ from tqdm import tqdm
 import threading
 from .utils import positive_int, dimensions
 import json
+import logging
+
+logging.basicConfig(filename='run.log', filemode='w', level=logging.DEBUG)
 
 argument_parser = argparse.ArgumentParser(
     prog='camoperator',
@@ -106,6 +109,8 @@ def capture_xy(camera, directory, x, y, progress):
     global download_thread
     if download_thread != None:
         download_thread.join()
+
+    logging.info('Capturing image for coordinates (%d, %d)', x, y)
 
     progress.set_description(f'Capturing images. Current ({x}, {y})')
     capture_file = camera.capture()
