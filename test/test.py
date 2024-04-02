@@ -39,7 +39,7 @@ class BaseMockCamera:
 
     def capture(self):
         time.sleep(2/time_speed)
-        mock_filename = MockCameraFile('', datetime.datetime.now().isoformat())
+        mock_filename = MockCameraFile('', f'{datetime.datetime.now().isoformat()}.nef')
         self.mock_storage[mock_filename] = self.get_image()
         return mock_filename
     
