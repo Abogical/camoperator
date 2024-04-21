@@ -3,6 +3,10 @@
 Operates the camera and controller to capture multiple images in the horizontal and vertical directions. These images collectively make up
 the integral image.
 
+## Install dependencies
+
+Install dependencies first with `pip install -r requirements.txt`
+
 ## Usage
 
 ### Calibration
