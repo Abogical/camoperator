@@ -31,7 +31,7 @@ found in the folder it saves to with the filename `config.json`. A checkerboard 
 
 #### Example
 ```
-python3 -m camoperator.calibrate -p /dev/ttyUSB0 -o ./images/config.json
+python3 -m camoperator.calibrate -p /dev/ttyUSB0 --checkerboard-dims 6,8 -o ./images/config.json
 ```
 
 ### Capture
