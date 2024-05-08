@@ -11,7 +11,7 @@ Install dependencies first with `pip install -r requirements.txt`
 
 ### Calibration
 ```
-usage: calibrate [-h] [-p CONTROLLER_PORT] --checkerboard-dims CHECKERBOARD_DIMS [--square-size SQUARE_SIZE] [-o OUTPUT]
+python3 -m camoperator.calibrate [-h] [-p CONTROLLER_PORT] --checkerboard-dims CHECKERBOARD_DIMS [--square-size SQUARE_SIZE] [-o OUTPUT]
 
 Gets calibration information from the camera via capturing a checkerboard image.
 
@@ -26,8 +26,13 @@ options:
   -o OUTPUT, --output OUTPUT
                         Output filename, default is stdout
 ```
-The configuration is a JSON file that is usually saved in the images folder where the capture process will store images to. The capture process will automatically read this config file if
-found in the folder it saves to.
+The configuration is a JSON file that is usually saved in the images folder where the capture process will store images to. The capture process will automatically read this config file if it is
+found in the folder it saves to with the filename `config.json`. A checkerboard image needs to be in the photo with the checkerboard dimensions specified.
+
+#### Example
+```
+python3 -m camoperator.calibrate -p /dev/ttyUSB0 -o ./images/config.json
+```
 
 ### Capture
 ```
